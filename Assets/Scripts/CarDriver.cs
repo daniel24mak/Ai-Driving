@@ -1,0 +1,112 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CarDriver : MonoBehaviour
+{
+    public float maxMotorTorque = 1500f;
+    public float maxSteeringAngle = 30f; 
+    public float brakeForce = 3000f;
+
+    public WheelCollider frontLeftCollider;
+    public WheelCollider frontRightCollider;
+    public WheelCollider rearLeftCollider;
+    public WheelCollider rearRightCollider;
+
+    public Transform frontLeftMesh;
+    public Transform frontRightMesh;
+    public Transform rearLeftMesh;
+    public Transform rearRightMesh;
+
+    private float motorInput = 0f;
+    private float steeringInput = 0f;
+
+    private bool controlledByML = false;
+
+    public void SetInputs(float forward, float turn)
+    {
+        motorInput = forward;
+        steeringInput = turn;
+        controlledByML = true;
+    }
+
+    public void StopCompletely()
+    {
+        motorInput = 0f;
+        steeringInput = 0f;
+
+        frontLeftCollider.brakeTorque = brakeForce;
+        frontRightCollider.brakeTorque = brakeForce;
+        rearLeftCollider.brakeTorque = brakeForce;
+        rearRightCollider.brakeTorque = brakeForce;
+
+        ResetWheels();
+    }
+
+    public void ResetWheels()
+    {
+        frontLeftCollider.motorTorque = 0f;
+        frontRightCollider.motorTorque = 0f;
+        rearLeftCollider.motorTorque = 0f;
+        rearRightCollider.motorTorque = 0f;
+
+        frontLeftCollider.brakeTorque = brakeForce;
+        frontRightCollider.brakeTorque = brakeForce;
+        rearLeftCollider.brakeTorque = brakeForce;
+        rearRightCollider.brakeTorque = brakeForce;
+
+        frontLeftCollider.steerAngle = 0f;
+        frontRightCollider.steerAngle = 0f;
+    }
+
+
+    void Update()
+    {
+        if (!controlledByML)
+        {
+            motorInput = Input.GetAxis("Vertical");
+            steeringInput = Input.GetAxis("Horizontal");
+        }
+
+        UpdateWheelVisual(frontLeftCollider, frontLeftMesh);
+        UpdateWheelVisual(frontRightCollider, frontRightMesh);
+        UpdateWheelVisual(rearLeftCollider, rearLeftMesh);
+        UpdateWheelVisual(rearRightCollider, rearRightMesh);
+    }
+
+    void FixedUpdate()
+    {
+        frontLeftCollider.steerAngle = steeringInput * maxSteeringAngle;
+        frontRightCollider.steerAngle = steeringInput * maxSteeringAngle;
+
+        rearLeftCollider.motorTorque = motorInput * maxMotorTorque;
+        rearRightCollider.motorTorque = motorInput * maxMotorTorque;
+
+        if (motorInput == 0f)
+        {
+            frontLeftCollider.brakeTorque = brakeForce;
+            frontRightCollider.brakeTorque = brakeForce;
+            rearLeftCollider.brakeTorque = brakeForce;
+            rearRightCollider.brakeTorque = brakeForce;
+        }
+        else
+        {
+            frontLeftCollider.brakeTorque = 0f;
+            frontRightCollider.brakeTorque = 0f;
+            rearLeftCollider.brakeTorque = 0f;
+            rearRightCollider.brakeTorque = 0f;
+        }
+
+        controlledByML = false;
+    }
+
+    void UpdateWheelVisual(WheelCollider col, Transform wheelMesh)
+    {
+        Vector3 pos;
+        Quaternion rot;
+        col.GetWorldPose(out pos, out rot);
+        wheelMesh.position = pos;
+        wheelMesh.rotation = rot;
+    }
+}
